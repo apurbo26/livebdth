@@ -127,7 +127,6 @@
             background-color: #2f3542;
             overflow-y: auto;
             overflow-x: hidden;
-            /* এড কনটেইনারের হাইট 18px ধরে হাইট ক্যালকুলেশন ঠিক করা হলো */
             height: calc(100vh - 220px - 18px); 
             display: grid; 
             grid-template-columns: repeat(4, 1fr);
@@ -190,11 +189,6 @@
         .hide {
             opacity: 0 !important;
             pointer-events: none; 
-        }
-        
-        /* M3U লোডার স্টাইল */
-        .m3u-loader {
-            display: none; 
         }
         
         /* Adzilla বিজ্ঞাপন */
@@ -269,8 +263,8 @@
     </div>
 
     <script>
-        // 🔥🔥🔥 পরিবর্তন: Gist Raw URL বসানো হলো 🔥🔥🔥
-        const CHANNELS_JSON_URL = 'https://gist.githubusercontent.com/apurbo26/3287e049423446defaf7fd608d017544/raw/b750f383ea287b0957d98632d7d777eafc9f258f/channels_data.json';
+        // 🔥 পরিবর্তন: এখন রিপোজিটরির রুট থেকে channels_data.json লোড করবে
+        const CHANNELS_JSON_URL = '/channels_data.json';
         
         var video = document.getElementById('video');
         var playerBox = document.getElementById('playerBox'); 
@@ -295,32 +289,26 @@
 
         // --- JSON ডেটা লোড এবং রেন্ডার করার ফাংশনালিটি ---
 
-        // JSON ডেটা লোড এবং চ্যানেল রেন্ডার করার ফাংশন
         async function fetchAndRenderChannels() {
             channelListSection.innerHTML = '<p style="text-align: center; color: #ff4757; width: 100%; padding-top: 20px;"><i class="fas fa-spinner fa-spin"></i> চ্যানেল লোড হচ্ছে...</p>';
             showSpinner();
             
             try {
+                // সরাসরি রিপোজিটরি রুট থেকে ডেটা লোড করার চেষ্টা
                 const response = await fetch(CHANNELS_JSON_URL);
                 if (!response.ok) {
                     throw new Error(`চ্যানেল ডেটা লোড করতে HTTP ত্রুটি! স্ট্যাটাস: ${response.status}`);
                 }
                 
-                // JSON ডেটা পার্স করা
                 const channels = await response.json(); 
-                
-                // চ্যানেল লিস্ট ক্লিয়ার করা
                 channelListSection.innerHTML = '';
 
-                // চ্যানেলগুলো DOM-এ যোগ করুন
                 channels.forEach(channel => {
                     addChannelToDOM(channel);
                 });
 
                 if (channels.length > 0) {
-                    // প্রথম চ্যানেলটি অটো প্লে
                     const firstChannelItem = channelListSection.querySelector('.channel-item');
-                    // চেক করা হচ্ছে যেন প্রথম চ্যানেলের ডেটা আছে
                     const firstChannel = channels[0];
                     playChannel(firstChannelItem, firstChannel.name, firstChannel.url); 
                 }
@@ -332,14 +320,12 @@
             }
         }
 
-        // DOM-এ চ্যানেল যোগ করার ফাংশন 
         function addChannelToDOM(channel) {
             const channelItem = document.createElement('div');
             channelItem.className = 'channel-item';
             channelItem.setAttribute('data-url', channel.url);
             channelItem.setAttribute('data-name', channel.name);
             
-            // লোগো URL ব্যবহার করা হচ্ছে, ত্রুটি হলে ডিফল্ট লোগো দেখাবে
             channelItem.innerHTML = `
                 <img src="${channel.logo}" alt="${channel.name}" onerror="this.src='https://i.ibb.co/0C8Q8J1/default-channel.png'">
                 <span>${channel.name}</span>
@@ -354,35 +340,23 @@
             channelListSection.appendChild(channelItem);
         }
 
-        // --- প্লেয়ার কন্ট্রোল এবং ইউটিলিটি ফাংশন (আগের মতোই) ---
+        // --- প্লেয়ার কন্ট্রোল এবং ইউটিলিটি ফাংশন (অপরিবর্তিত) ---
 
-        function showSpinner() {
-            loadingSpinner.style.display = 'block';
-        }
-        function hideSpinner() {
-            loadingSpinner.style.display = 'none';
-        }
+        function showSpinner() { loadingSpinner.style.display = 'block'; }
+        function hideSpinner() { loadingSpinner.style.display = 'none'; }
         video.addEventListener('waiting', showSpinner); 
         video.addEventListener('playing', hideSpinner); 
         video.addEventListener('error', hideSpinner); 
         video.addEventListener('loadeddata', hideSpinner); 
 
-        function toggleControls() {
-            if (controlsVisible) {
-                hideControls();
-            } else {
-                showControls();
-            }
-        }
+        function toggleControls() { controlsVisible ? hideControls() : showControls(); }
         
         function showControls() {
             controlsVisible = true;
             channelNameDisplay.classList.remove('hide'); 
             videoControls.classList.remove('hide');
             progressBar.classList.remove('hide');
-            if (video.paused === false) { 
-                resetControlsTimer(); 
-            }
+            if (video.paused === false) { resetControlsTimer(); }
         }
 
         function hideControls() {
@@ -489,9 +463,9 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('zoomToggleBtn').innerText = zoomModes[0].text;
-            // 🔥 JSON ডেটা লোড করা হচ্ছে
             fetchAndRenderChannels();
         });
     </script>
 </body>
-</html>
+    </html>
+    
