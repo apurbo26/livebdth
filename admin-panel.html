@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚙️ চ্যানেল অ্যাডমিন প্যানেল</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #1a1a1a; 
+            color: white; 
+            padding: 20px; 
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card { 
+            background-color: #2f3542; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            color: #ff4757; 
+            border-bottom: 2px solid #3d464e;
+            padding-bottom: 10px;
+        }
+        h2 { color: #ff4757; margin-top: 0; }
+        .button { 
+            color: white; 
+            text-decoration: none; 
+            padding: 12px 20px; 
+            background-color: #ff4757; 
+            border: none;
+            border-radius: 5px; 
+            display: inline-block; 
+            margin-top: 15px; 
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .button:hover { 
+            background-color: #e03c4c; 
+        }
+        .warning {
+            background-color: #ffd166;
+            color: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        .instruction-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .instruction-list li {
+            margin-bottom: 10px;
+            background-color: #3d464e;
+            padding: 10px;
+            border-left: 3px solid #ff4757;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ চ্যানেল অ্যাডমিন কন্ট্রোল প্যানেল</h1>
+        
+        <div class="warning">
+            <i class="fas fa-exclamation-triangle"></i> **গুরুত্বপূর্ণ নোট:** এটি একটি সার্ভারবিহীন প্যানেল। চ্যানেলগুলি আপডেট করতে আপনাকে সরাসরি GitHub-এর ফাইল এডিটিং ইন্টারফেস ব্যবহার করতে হবে।
+        </div>
+
+        <div class="card">
+            <h2>১. চ্যানেল ডেটা এডিট করুন (যোগ/এডিট/ডিলিট)</h2>
+            <p>চ্যানেলগুলির তালিকা পরিবর্তন (যেমন, নতুন চ্যানেল যোগ বা কোনো চ্যানেলের URL পরিবর্তন) করতে নিচের বাটনে ক্লিক করুন।</p>
+            <p>আপনাকে JSON ফরম্যাটটি সঠিকভাবে অনুসরণ করতে হবে, যেখানে প্রতিটি চ্যানেলের জন্য `name`, `logo` এবং `url` অবশ্যই থাকতে হবে।</p>
+            
+            <ul class="instruction-list">
+                <li>**`name`**: চ্যানেলের নাম।</li>
+                <li>**`logo`**: লোগোর URL (https)।</li>
+                <li>**`url`**: চ্যানেলের স্ট্রিমিং URL (M3U8/HLS)।</li>
+            </ul>
+            
+            <a href="https://gist.github.com/apurbo26/3287e049423446defaf7fd608d017544/edit" class="button" target="_blank">
+                <i class="fab fa-github"></i> channels_data.json এডিট করুন
+            </a>
+            
+            <p style="margin-top: 15px; font-size: 0.9em; color: #ccc;">**সেভ করার নিয়ম:** GitHub-এ এডিট করার পর অবশ্যই "Commit changes" (বা "Save changes") বাটনে ক্লিক করবেন।</p>
+        </div>
+
+        <div class="card">
+            <h2>২. লাইভ প্লেয়ার দেখুন</h2>
+            <p>পরিবর্তনগুলি সেভ করার পর লাইভ প্লেয়ার কেমন দেখাচ্ছে, তা যাচাই করুন।</p>
+            <a href="index.html" target="_blank" class="button">
+                <i class="fas fa-tv"></i> লাইভ প্লেয়ার খুলুন
+            </a>
+        </div>
+    </div>
+</body>
+</html>
