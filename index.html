@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>আমার লাইভ টিভি</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            height: 100vh;
+            flex-direction: column; 
+            overflow: hidden;
+        }
+
+        /* ভিডিও প্লেয়ার এরিয়া */
+        .player-container {
+            flex: none; 
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            width: 100%;
+            position: relative;
+            height: 220px; 
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            object-fit: contain; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            z-index: 1; 
+        }
+        
+        /* লোডিং স্পিনার স্টাইল */
+        .loading-spinner {
+            border: 5px solid #f3f3f3; 
+            border-top: 5px solid #ff4757; 
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite; 
+            position: absolute;
+            z-index: 5; 
+            display: none; 
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* চ্যানেলের নাম */
+        .current-channel {
+            position: absolute; 
+            top: 10px; 
+            left: 10px; 
+            background: rgba(0,0,0,0.5); 
+            padding: 5px 10px; 
+            border-radius: 5px; 
+            z-index: 10;
+            font-size: 1rem;
+            color: white;
+        }
+
+        /* ভিডিও কন্ট্রোল বার */
+        .video-controls {
+            position: absolute;
+            bottom: 0; 
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center; 
+            align-items: center;
+            gap: 15px;
+            z-index: 10;
+            padding: 0 10px; 
+        }
+
+        .video-controls button {
+            background: rgba(60, 60, 60, 0.5);
+            border: 1px solid #ccc;
+            color: white;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .video-progress-bar {
+            position: absolute;
+            top: 0; 
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+        }
+
+        .video-progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #ff4757; 
+        }
+        
+        /* চ্যানেল লিস্ট এরিয়া - 4 কলাম এবং স্ক্রল প্রিভেনশন */
+        .channel-list-section {
+            flex: 1;
+            background-color: #2f3542;
+            overflow-y: auto;
+            overflow-x: hidden;
+            /* এড কনটেইনারের হাইট 18px ধরে হাইট ক্যালকুলেশন ঠিক করা হলো */
+            height: calc(100vh - 220px - 18px); 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            padding: 6px;
+            width: 100%;
+        }
+        
+        /* চ্যানেল আইটেম */
+        .channel-item {
+            background-color: #3d464e; 
+            border-radius: 6px; 
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            justify-content: center;
+            padding: 4px; 
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            text-align: center;
+            height: 80px; 
+            min-width: 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .channel-item.active {
+            background-color: #ff4757; 
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        
+        /* চ্যানেল লোগো */
+        .channel-item img {
+            width: 40px; 
+            height: 40px; 
+            object-fit: contain;
+            margin-bottom: 3px; 
+            border-radius: 50%; 
+            background-color: rgba(255,255,255,0.1); 
+            padding: 2px;
+        }
+        
+        .channel-item span {
+            font-size: 0.55rem;
+            line-height: 1.1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        /* কন্ট্রোল হাইড/শো */
+        .video-controls, 
+        .current-channel,
+        .video-progress-bar {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .hide {
+            opacity: 0 !important;
+            pointer-events: none; 
+        }
+        
+        /* M3U লোডার স্টাইল */
+        .m3u-loader {
+            display: none; 
+        }
+        
+        /* Adzilla বিজ্ঞাপন */
+        .ad-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #222;
+            padding: 4px;
+            text-align: center;
+            z-index: 100;
+            border-top: 1px solid #444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 18px; 
+        }
+
+        .ad-container img {
+            height: 14px;
+            width: auto;
+            margin-right: 6px;
+        }
+
+        .ad-container span {
+            font-size: 0.65rem;
+        }
+
+        .ad-container a {
+            color: #ff4757;
+            text-decoration: none;
+            margin-left: 4px;
+            font-size: 0.65rem;
+        }
+
+        .ad-container a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="player-container" id="playerBox">
+        <video id="video" playsinline webkit-playsinline></video> 
+        
+        <div class="loading-spinner" id="loadingSpinner"></div>
+        
+        <div class="current-channel" id="channelName">চ্যানেল সিলেক্ট করুন</div>
+        
+        <div class="video-controls">
+            <button onclick="rewindVideo()"><i class="fas fa-backward"></i></button>
+            <button id="playPauseBtn" onclick="togglePlayPause()"><i class="fas fa-play"></i></button>
+            <button onclick="forwardVideo()"><i class="fas fa-forward"></i></button>
+            
+            <button id="zoomToggleBtn" onclick="toggleZoomMode()">🔍 ফিট</button> 
+            <button onclick="toggleFullscreen()">📺 ফুল</button> 
+        </div>
+        
+        <div class="video-progress-bar" onclick="seekVideo(event)">
+            <div class="video-progress-bar-fill" id="progressBarFill"></div>
+        </div>
+    </div>
+
+    <div class="channel-list-section" id="channelListSection">
+        <p style="text-align: center; color: #aaa; width: 100%; padding-top: 20px;">চ্যানেল লোড হচ্ছে, অপেক্ষা করুন...</p>
+    </div>
+    
+    <div class="ad-container">
+        <img src="https://i.ibb.co/rQ29t9k/adzilla-logo.png" alt="Adzilla">
+        <span>$ADZILLA <a href="#">BUY NOW</a></span>
+    </div>
+
+    <script>
+        // 🔥🔥🔥 পরিবর্তন: Gist Raw URL বসানো হলো 🔥🔥🔥
+        const CHANNELS_JSON_URL = 'https://gist.githubusercontent.com/apurbo26/3287e049423446defaf7fd608d017544/raw/b750f383ea287b0957d98632d7d777eafc9f258f/channels_data.json';
+        
+        var video = document.getElementById('video');
+        var playerBox = document.getElementById('playerBox'); 
+        var channelNameDisplay = document.getElementById('channelName');
+        var videoControls = document.querySelector('.video-controls'); 
+        var progressBar = document.querySelector('.video-progress-bar'); 
+        var playPauseBtn = document.getElementById('playPauseBtn');
+        var loadingSpinner = document.getElementById('loadingSpinner'); 
+        var channelListSection = document.getElementById('channelListSection');
+        var hls = null; 
+        
+        var controlsTimeout; 
+        var controlsVisible = true; 
+        
+        // জুম টগল লজিক
+        var zoomModeIndex = 0; 
+        const zoomModes = [
+            { mode: 'contain', text: '🔍 ফিট' },
+            { mode: 'cover', text: '➕ জুম' },
+            { mode: 'fill', text: '🔄 স্ট্রেচ' }
+        ];
+
+        // --- JSON ডেটা লোড এবং রেন্ডার করার ফাংশনালিটি ---
+
+        // JSON ডেটা লোড এবং চ্যানেল রেন্ডার করার ফাংশন
+        async function fetchAndRenderChannels() {
+            channelListSection.innerHTML = '<p style="text-align: center; color: #ff4757; width: 100%; padding-top: 20px;"><i class="fas fa-spinner fa-spin"></i> চ্যানেল লোড হচ্ছে...</p>';
+            showSpinner();
+            
+            try {
+                const response = await fetch(CHANNELS_JSON_URL);
+                if (!response.ok) {
+                    throw new Error(`চ্যানেল ডেটা লোড করতে HTTP ত্রুটি! স্ট্যাটাস: ${response.status}`);
+                }
+                
+                // JSON ডেটা পার্স করা
+                const channels = await response.json(); 
+                
+                // চ্যানেল লিস্ট ক্লিয়ার করা
+                channelListSection.innerHTML = '';
+
+                // চ্যানেলগুলো DOM-এ যোগ করুন
+                channels.forEach(channel => {
+                    addChannelToDOM(channel);
+                });
+
+                if (channels.length > 0) {
+                    // প্রথম চ্যানেলটি অটো প্লে
+                    const firstChannelItem = channelListSection.querySelector('.channel-item');
+                    // চেক করা হচ্ছে যেন প্রথম চ্যানেলের ডেটা আছে
+                    const firstChannel = channels[0];
+                    playChannel(firstChannelItem, firstChannel.name, firstChannel.url); 
+                }
+                hideSpinner();
+            } catch (error) {
+                console.error('চ্যানেল ডেটা লোড করতে সমস্যা:', error);
+                channelListSection.innerHTML = `<p style="text-align: center; color: red; width: 100%; padding-top: 20px;">চ্যানেল ডেটা লোড করতে ব্যর্থ: ${error.message}</p>`;
+                hideSpinner();
+            }
+        }
+
+        // DOM-এ চ্যানেল যোগ করার ফাংশন 
+        function addChannelToDOM(channel) {
+            const channelItem = document.createElement('div');
+            channelItem.className = 'channel-item';
+            channelItem.setAttribute('data-url', channel.url);
+            channelItem.setAttribute('data-name', channel.name);
+            
+            // লোগো URL ব্যবহার করা হচ্ছে, ত্রুটি হলে ডিফল্ট লোগো দেখাবে
+            channelItem.innerHTML = `
+                <img src="${channel.logo}" alt="${channel.name}" onerror="this.src='https://i.ibb.co/0C8Q8J1/default-channel.png'">
+                <span>${channel.name}</span>
+            `;
+
+            channelItem.addEventListener('click', function() {
+                const url = this.getAttribute('data-url');
+                const name = this.getAttribute('data-name');
+                playChannel(this, name, url);
+            });
+
+            channelListSection.appendChild(channelItem);
+        }
+
+        // --- প্লেয়ার কন্ট্রোল এবং ইউটিলিটি ফাংশন (আগের মতোই) ---
+
+        function showSpinner() {
+            loadingSpinner.style.display = 'block';
+        }
+        function hideSpinner() {
+            loadingSpinner.style.display = 'none';
+        }
+        video.addEventListener('waiting', showSpinner); 
+        video.addEventListener('playing', hideSpinner); 
+        video.addEventListener('error', hideSpinner); 
+        video.addEventListener('loadeddata', hideSpinner); 
+
+        function toggleControls() {
+            if (controlsVisible) {
+                hideControls();
+            } else {
+                showControls();
+            }
+        }
+        
+        function showControls() {
+            controlsVisible = true;
+            channelNameDisplay.classList.remove('hide'); 
+            videoControls.classList.remove('hide');
+            progressBar.classList.remove('hide');
+            if (video.paused === false) { 
+                resetControlsTimer(); 
+            }
+        }
+
+        function hideControls() {
+            controlsVisible = false;
+            channelNameDisplay.classList.add('hide'); 
+            videoControls.classList.add('hide');
+            progressBar.classList.add('hide');
+            clearTimeout(controlsTimeout); 
+        }
+        
+        function resetControlsTimer() {
+            clearTimeout(controlsTimeout);
+            controlsTimeout = setTimeout(hideControls, 4000); 
+        }
+
+        playerBox.addEventListener('click', toggleControls);
+        showControls();
+        
+        // প্রধান প্লে ফাংশন (HLS.js ব্যবহার করে)
+        function playChannel(item, name, url) { 
+            const finalUrl = url; 
+            channelNameDisplay.innerText = "এখন চলছে: " + name; 
+            video.pause(); 
+            video.removeAttribute('src'); 
+            showSpinner(); 
+
+            if (hls) { hls.destroy(); hls = null; }
+            
+            const attemptPlay = () => {
+                video.play().then(() => {
+                    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>'; 
+                    hideSpinner();
+                }).catch(error => {
+                    console.error("ভিডিও প্লে চালু করা যায়নি (Autoplay blocked):", error);
+                    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    hideSpinner(); 
+                });
+            };
+
+            if (Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(finalUrl); 
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() { attemptPlay(); });
+                hls.on(Hls.Events.ERROR, function(event, data) {
+                    if (data.fatal) {
+                        console.error("HLS Fatal Error:", data);
+                        hideSpinner(); 
+                        alert("ভিডিও লোড করতে সমস্যা হচ্ছে: " + data.details);
+                    }
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = finalUrl;
+                video.addEventListener('loadedmetadata', () => { attemptPlay(); }, {once: true}); 
+            } else {
+                alert("আপনার ব্রাউজার এই ভিডিও ফরম্যাট সমর্থন করে না।");
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                hideSpinner(); 
+            }
+
+            var items = document.querySelectorAll('.channel-item');
+            items.forEach(i => i.classList.remove('active'));
+            if (item) item.classList.add('active'); 
+            showControls();
+        }
+        
+        function togglePlayPause() {
+            showControls(); 
+            if (video.paused) {
+                showSpinner(); 
+                video.play().then(() => { playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>'; }).catch(error => { console.error("প্লে করতে ব্যর্থ:", error); hideSpinner(); });
+            } else {
+                video.pause();
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                hideSpinner(); 
+            }
+        }
+        
+        function rewindVideo() { if (isFinite(video.duration)) { video.currentTime = video.currentTime - 10; } showControls(); }
+        function forwardVideo() { if (isFinite(video.duration)) { video.currentTime = video.currentTime + 10; } showControls(); }
+
+        function toggleZoomMode() {
+            showControls(); 
+            var videoElement = document.getElementById('video');
+            var zoomToggleBtn = document.getElementById('zoomToggleBtn');
+            zoomModeIndex = (zoomModeIndex + 1) % zoomModes.length; 
+            const currentMode = zoomModes[zoomModeIndex];
+            videoElement.style.objectFit = currentMode.mode;
+            zoomToggleBtn.innerText = currentMode.text;
+        }
+
+        function toggleFullscreen() {
+            showControls();
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+                if (screen.orientation && screen.orientation.unlock) { screen.orientation.unlock(); } 
+            } else {
+                if (playerBox.requestFullscreen) { playerBox.requestFullscreen(); }
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(error => { console.log("স্ক্রিন ওরিয়েন্টেশন লক করতে ব্যর্থ:", error); });
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('zoomToggleBtn').innerText = zoomModes[0].text;
+            // 🔥 JSON ডেটা লোড করা হচ্ছে
+            fetchAndRenderChannels();
+        });
+    </script>
+</body>
+</html>
