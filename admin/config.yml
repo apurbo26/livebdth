@@ -4,16 +4,17 @@ backend:
   branch: main
   base_url: https://api.netlify.com
   auth_scope: repo
+  site_url: https://helpful-baklava-016ed1.netlify.app  # <--- নতুন যোগ করা হয়েছে
+  display_url: https://helpful-baklava-016ed1.netlify.app # <--- নতুন যোগ করা হয়েছে
 
 media_folder: "assets/images" 
 public_folder: "/assets/images"
 
-# Collections (চ্যানেল তালিকা)
 collections:
   - name: "channels" 
     label: "Live TV Channels"
     folder: "/"
-    file: "channels_data.json" # রিপোজিটরির রুটে থাকা JSON ফাইল
+    file: "channels_data.json" 
     format: json
     editor:
       preview: false
