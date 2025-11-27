@@ -1,19 +1,20 @@
 backend:
   name: github
   repo: apurbo26/livebdth  # আপনার GitHub ইউজারনেম/রিপোজিটরি
-  branch: main             # আপনার প্রধান ব্রাঞ্চ
+  branch: main
   base_url: https://api.netlify.com
   auth_scope: repo
 
-media_folder: "assets/images" # আপনার ছবির ফাইলগুলো কোথায় থাকবে
+# মিডিয়া এবং পাবলিক ফোল্ডার সেটআপ (যদি দরকার না হয়, বাদ দিতে পারেন, তবে থাকা ভালো)
+media_folder: "assets/images" 
 public_folder: "/assets/images"
 
-# Collections (এখানেই আপনার channel data সেটআপ হবে)
+# Collections (চ্যানেল তালিকা)
 collections:
   - name: "channels" 
     label: "Live TV Channels"
     folder: "/"
-    file: "channels_data.json" # এটিই সেই JSON ফাইল যা এডিট হবে
+    file: "channels_data.json" # আপনার চ্যানেলের JSON ফাইল
     format: json
     editor:
       preview: false
